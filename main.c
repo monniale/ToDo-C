@@ -11,14 +11,23 @@
 */
 
 #define MAX 256 
+#define FILE_RELATIVE_PATH "C:\\Users\\monni\\OneDrive\\Documenti\\GitHub\\ToDo-C\\"
+
+int length(char *str);
+int showList();
+int newLine(char *text);
+int deleteLineInt(int lnum);
+int deleteLineString(char *delete);
 
 int showList(){
     FILE *fptr;
-    fptr = fopen("list.txt", "r");
+    char filePath[MAX];
+    snprintf(filePath, MAX, "%slist.txt", FILE_RELATIVE_PATH);
+    fptr = fopen(filePath, "r");
     char line[100];
 
     if(fptr == NULL){
-        printf("File list.txt not found. Exiting...\n");
+        printf("File list.txt not found. If it's the first time try adding a new element to the list with todo add \"item\" Exiting...\n");
         return 0;
     }
 
@@ -35,7 +44,9 @@ int showList(){
 
 int newLine(char *text){
     FILE *fptr;
-    fptr = fopen("list.txt", "a");
+    char filePath[MAX];
+    snprintf(filePath, MAX, "%slist.txt", FILE_RELATIVE_PATH);
+    fptr = fopen(filePath, "a");
 
     fprintf(fptr,"%s\n",text);
     fclose(fptr);
@@ -43,19 +54,22 @@ int newLine(char *text){
 }
 
 int deleteLineInt(int lnum){
-    
     if(lnum < 1)
         return 0;
 
     FILE *fptr, *tempFile;
     char str[MAX], temp[] = "temp.txt";
     int currentLine = 0;
-    fptr = fopen("list.txt", "r");
+    char filePath[MAX], tempFilePath[MAX];
+    snprintf(filePath, MAX, "%slist.txt", FILE_RELATIVE_PATH);
+    snprintf(tempFilePath, MAX, "%stemp.txt", FILE_RELATIVE_PATH);
+
+    fptr = fopen(filePath, "r");
     if (fptr == NULL){
         printf(" File not found or unable to open the input file!!\n");
         return 0;
     }
-    tempFile = fopen(temp, "w"); // open the temporary file in write mode 
+    tempFile = fopen(tempFilePath, "w"); // open the temporary file in write mode 
     if (tempFile == NULL) 
     {
             printf("Unable to open a temporary file to write!!\n");
@@ -77,13 +91,50 @@ int deleteLineInt(int lnum){
         }
         fclose(fptr);
         fclose(tempFile);
-        remove("list.txt");  		// remove the original file 
-        rename(temp, "list.txt"); 	// rename the temporary file to original name
+        remove(filePath);  		// remove the original file 
+        rename(tempFilePath, filePath); 	// rename the temporary file to original name
     return 1;
 }
 
-int deleteLineString(){
-    return 0;
+int deleteLineString(char *delete){
+    FILE *fptr, *tempFile;
+    int found = 0;
+    char str[MAX], temp[] = "temp.txt";
+    char filePath[MAX], tempFilePath[MAX];
+    snprintf(filePath, MAX, "%slist.txt", FILE_RELATIVE_PATH);
+    snprintf(tempFilePath, MAX, "%stemp.txt", FILE_RELATIVE_PATH);
+    fptr = fopen(filePath, "r");
+    if (fptr == NULL){
+        printf(" File not found or unable to open the input file!!\n");
+        return 0;
+    }
+    tempFile = fopen(tempFilePath, "w"); // open the temporary file in write mode 
+    if (tempFile == NULL) 
+    {
+            printf("Unable to open a temporary file to write!!\n");
+            fclose(fptr);
+            return 0;
+    }
+    while (fgets(str, MAX, fptr) != NULL) 
+    {
+        // Remove newline character from the line if present
+        str[strcspn(str, "\n")] = '\0';
+        if (strcmp(str, delete) == 0) 
+        {
+            found = 1; // Mark as found
+        } 
+        else 
+        {
+            fprintf(tempFile, "%s\n", str); // Write non-matching lines
+        }
+    }
+    if (!found)
+        printf("Element not found in the list\n");
+        fclose(fptr);
+        fclose(tempFile);
+        remove(filePath);  		// remove the original file 
+        rename(tempFilePath, filePath); 	// rename the temporary file to original name
+    return 1;
 }
 
 int length(char *str){
@@ -112,7 +163,7 @@ int main(int argc, char* argv[]){
         if(strcmp(argv[2],"-i") == 0 && argv[3] != NULL){
             result = deleteLineInt(atoi(argv[3]));
         } else {
-            result = deleteLineString();
+            result = deleteLineString(argv[2]);
         }
     }else if(strcmp(argv[1],"show") == 0){
         result = showList();
